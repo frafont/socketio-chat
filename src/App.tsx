@@ -1,26 +1,32 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import Chat from './Chat';
 
-function App() {
+import LoginForm from './form';
+
+interface UserData {
+  email: string;
+  name: string;
+  surname: string;
+  birth: string;
+}
+
+const App: React.FC = () => {
+  const [userData, setUserData] = useState<UserData | null>(null);
+
+  const handleLogin = (userData: UserData) => {
+    setUserData(userData);
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <h1>My Chat App</h1>
+      {userData ? (
+        <Chat userData={userData} />
+      ) : (
+        <LoginForm onLogin={handleLogin} />
+      )}
     </div>
   );
-}
+};
 
 export default App;

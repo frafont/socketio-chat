@@ -1,38 +1,63 @@
 .App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  min-height: 100vh;
+  background-color: #f5f5f5;
 }
 
-.App-link {
-  color: #61dafb;
+.nickname-form,
+.message-form {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.nickname-form input,
+.message-form input {
+  padding: 0.5rem;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  flex-grow: 1;
+}
+
+.nickname-form button,
+.message-form button {
+  padding: 0.5rem;
+  border: none;
+  border-radius: 5px;
+  background-color: #333;
+  color: #fff;
+  cursor: pointer;
+}
+
+.chat-container {
+  width: 100%;
+  max-width: 600px;
+}
+
+.messages {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  background: #ffffff;
+  border-radius: 5px;
+  margin-bottom: 0.5rem;
+}
+
+.messages li {
+  padding: 0.5rem 1rem;
+}
+
+.user-message {
+  background-color: #efefef;
+}
+
+.system-message {
+  color: green;
+  font-style: italic;
 }
