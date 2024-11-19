@@ -1,90 +1,65 @@
-import React, { useState } from 'react';
-import { useSocket } from './SocketContext';  // Importa il hook per ottenere il socket
+import React, { useState } from "react";
+import { sendUserData } from "./socket"; // Funzione per inviare i dati al backend
 
-interface LoginProps {
-  onLogin: (userData: { email: string; name: string; surname: string; birth: string }) => void;
-}
-
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const socket = useSocket();  // Ottieni il socket dal contesto
-  const [email, setEmail] = useState<string>('');
-  const [name, setName] = useState<string>('');
-  const [surname, setSurname] = useState<string>('');
-  const [birth, setBirth] = useState<string>('');
-  const [error, setError] = useState<string | null>(null); // Stato per gestire errori
+const Form = () => {
+  const [name, setName] = useState("");
+  const [surname, setSurname] = useState("");
+  const [email, setEmail] = useState("");
+  const [dob, setDob] = useState(""); // Data di nascita
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validazione dei campi
-    if (!email.trim() || !name.trim() || !surname.trim() || !birth.trim()) {
-      setError('Tutti i campi sono obbligatori!');
-      return;
+    // Validazione dei dati
+    if (name && surname && email && dob) {
+      const userData = {
+        name,
+        surname,
+        email,
+        dob,
+      };
+      sendUserData(userData); // Invia i dati dell'utente
+    } else {
+      alert("Per favore, compila tutti i campi.");
     }
-
-    if (!socket) {
-      setError('Connessione al server non disponibile.');
-      return;
-    }
-
-    // Crea l'oggetto userData
-    const userData = { email, name, surname, birth };
-    
-    // Passa i dati al componente genitore tramite la funzione onLogin
-    onLogin(userData);
-
-    // Invia i dati al backend tramite Socket.IO
-    socket.emit('submitUserData', userData, (response: { success: boolean; message: string }) => {
-      if (response.success) {
-        console.log('Dati inviati con successo:', response.message);
-        setError(null); // Rimuovi eventuali errori precedenti
-      } else {
-        setError(`Errore nell’invio dei dati: ${response.message}`);
-      }
-    });
   };
 
   return (
     <div>
+      <h2>Registrazione Utente</h2>
       <form onSubmit={handleSubmit}>
-        <h2>Inserisci i tuoi dati</h2>
-        {error && <p style={{ color: 'red' }}>{error}</p>} {/* Mostra errori, se presenti */}
         <input
           type="text"
-          id="nome"
           placeholder="Nome"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          style={{ marginBottom: '0.5rem' }}
+          required
         />
         <input
           type="text"
-          id="cognome"
           placeholder="Cognome"
           value={surname}
           onChange={(e) => setSurname(e.target.value)}
-          style={{ marginBottom: '0.5rem' }}
+          required
         />
         <input
           type="email"
-          id="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          style={{ marginBottom: '0.5rem' }}
+          required
         />
         <input
           type="date"
-          id="dataDiNascita"
-          placeholder="Data di Nascita"
-          value={birth}
-          onChange={(e) => setBirth(e.target.value)}
-          style={{ marginBottom: '0.5rem' }}
+          placeholder="Data di nascita"
+          value={dob}
+          onChange={(e) => setDob(e.target.value)}
+          required
         />
-        <button type="submit">Accedi</button>
+        <button type="submit">Registrati</button>
       </form>
     </div>
   );
 };
 
-export default Login;
+export default Form;

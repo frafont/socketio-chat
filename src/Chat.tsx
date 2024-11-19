@@ -1,120 +1,79 @@
-import React, { useEffect, useState } from 'react';
-import { useSocket } from './SocketContext';  // Importa il hook per ottenere il socket
+import React, { useState, useEffect } from "react";
+import { sendMessage, disconnectUser } from "./socket"; // Funzioni per inviare messaggi e gestire la disconnessione
+import { io } from "socket.io-client";
 
-interface Message {
-  id: string;
-  text: string;
-}
-
-interface UserData {
-  email: string;
-  name: string;
-  surname: string;
-  birth: string;
-}
-
-interface ChatProps {
-  userData: UserData;
-}
-
-const Chat: React.FC<ChatProps> = ({ userData }) => {
-  const socket = useSocket();  // Ottieni il socket dal contesto
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState<string>('');
+const Chat = () => {
+  const [message, setMessage] = useState("");
+  const [chatId, setChatId] = useState<string | null>(null); // chatId che verrà assegnato dopo la registrazione
+  const [messages, setMessages] = useState<string[]>([]); // Per visualizzare i messaggi inviati
 
   useEffect(() => {
-    if (!socket) {
-      console.log("Socket non disponibile.");
-      return
-    }
-    if (!socket) return;
+    // Connessione WebSocket
+    const socket = io("http://localhost:3000");
 
-    console.log("Connected to the server!");
+    if (sessionStorage.getItem("chatId"))
+      setChatId(sessionStorage.getItem("chatId"));
 
-    // Listener per i messaggi di chat
-    socket.on('chat message', (msg: string) => {
-      console.log('Messaggio di chat ricevuto dal server:', msg);
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { id: Date.now().toString(), text: msg },
-      ]);
-    });
-
-    // Listener per l'evento di connessione utente
-    socket.on('user connected', (msg: string) => {
-      console.log('User connected:', msg);
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { id: Date.now().toString(), text: `🔵 ${msg}` },
-      ]);
-    });
-
-    // Listener per l'evento di disconnessione utente
-    socket.on('user disconnected', (msg: string) => {
-      console.log('User disconnected:', msg);
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { id: Date.now().toString(), text: `🔴 ${msg}` },
-      ]);
-    });
-
-    // Cleanup alla disconnessione del socket
-    return () => {
-      socket.off('chat message');
-      socket.off('user connected');
-      socket.off('user disconnected');
-    };
-  }, [socket]);
-
-  const sendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (socket && input) {
-      const message = `${userData.name} ${userData.surname} (${userData.email}): ${input}`;
-      socket.emit('chat message', message);
-      setInput('');
-      
-      try {
-        const response = await fetch('http://10.200.200.6:3000/api/message', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            message: input,
-            timestamp: new Date().toISOString(),
-          }),
-        });
-
-        if (response.ok) {
-          console.log('Messaggio salvato nel database con successo');
-        } else {
-          console.error('Errore durante il salvataggio del messaggio');
+    // Ascolta per eventuali errori nel salvataggio dei messaggi
+    socket.on(
+      "messageReceived",
+      (response: { status: string; message: string }) => {
+        if (response.status === "success") {
+          setMessages((prevMessages) => [...prevMessages, response.message]);
         }
-      } catch (error) {
-        console.error('Errore di rete:', error);
       }
+    );
+
+    socket.on("messageError", (error: { message: string; error: string }) => {
+      console.error("Errore nel salvataggio del messaggio:", error);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+  const handleSendMessage = () => {
+    if (message && chatId) {
+      sendMessage(message, chatId); // Invia il messaggio al server tramite WebSocket
+      setMessage(""); // Reset del campo messaggio
+    } else {
+      alert("Per favore, compila il messaggio.");
+    }
+  };
+
+  const handleDisconnect = () => {
+    if (chatId) {
+      disconnectUser(chatId); // Disconnessione dell'utente
     }
   };
 
   return (
     <div>
-      <h2>Chat App</h2>
-      <p>Benvenuto, {userData.name} {userData.surname} (data di nascita: {userData.birth})</p>
-      <div style={{ border: '1px solid #ccc', padding: '1rem', maxHeight: '300px', overflowY: 'scroll' }}>
-        {messages.map((msg) => (
-          <div key={msg.id}>{msg.text}</div>
-        ))}
-      </div>
-      <form onSubmit={sendMessage}>
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Scrivi un messaggio..."
-          style={{ width: '80%', marginRight: '0.5rem' }}
-        />
-        <button type="submit">Invia</button>
-      </form>
+      <h2>Chat</h2>
+      {chatId ? (
+        <div>
+          <div>
+            <h3>Messaggi:</h3>
+            <div>
+              {messages.map((msg, index) => (
+                <div key={index}>{msg}</div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <input
+              type="text"
+              placeholder="Scrivi un messaggio"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+            <button onClick={handleSendMessage}>Invia</button>
+          </div>
+          <button onClick={handleDisconnect}>Disconnetti</button>
+        </div>
+      ) : (
+        <p>Per iniziare, registrati nel modulo sopra.</p>
+      )}
     </div>
   );
 };
